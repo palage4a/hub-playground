@@ -4,9 +4,6 @@
 [submodule "go-playground"]
 	path = go-playground
 	url = git@github.com:palage4a/go-playground.git
-[submodule "rust-playground"]
-	path = rust-playground
-	url = git@github.com:palage4a/rust-playground.git
 [submodule "tarantool-playground"]
 	path = tarantool-playground
 	url = git@github.com:palage4a/tarantool-playground.git
