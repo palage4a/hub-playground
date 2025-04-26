@@ -4,8 +4,20 @@ pub struct Rectangle {
     pub h: u32,
 }
 
+
+
 impl Rectangle {
-    pub fn can_hold(&self, other: Rectangle) -> bool {
+    /// can_hold returns true if the fist rectangle can hold the other one.
+    /// otherwise, it returns false:
+    ///
+    /// ```
+    /// let big = adder::Rectangle{w: 100, h: 100};
+    /// let small = adder::Rectangle{w: 2,h: 2};
+    ///
+    /// assert!(big.can_hold(&small));
+    /// assert!(!small.can_hold(&big));
+    /// ```
+    pub fn can_hold(&self, other: &Rectangle) -> bool {
         self.w > other.w && self.h > other.h
     }
 
@@ -27,21 +39,8 @@ pub fn first_word(s: &String) -> &str {
 
 #[cfg(test)]
 mod tests {
+    use std::collections::HashMap;
     use super::*;
-
-    #[test]
-    fn can_hold_err() {
-        let r1 = Rectangle{w: 1, h: 2};
-        let r2 = Rectangle{w: 2,h: 2};
-        assert!(!r1.can_hold(r2));
-    }
-
-    #[test]
-    fn can_hold_success() {
-        let r1 = Rectangle{w: 2,h: 2};
-        let r2 = Rectangle{w: 1,h: 1};
-        assert!(r1.can_hold(r2));
-    }
 
     #[test]
     fn equal_rects() {
@@ -58,10 +57,12 @@ mod tests {
         let r1 = Rectangle{w: 1, h: 1};
         let r2 = Rectangle{w: 1, h: 1};
 
-        match r1 == r2 {
+        let re = match r1 == r2 {
             true => Ok(()),
             false => Err(format!("{:?} != {:?}", r1, r2)),
         };
+
+        assert_eq!(Ok(()), re);
 
         let r3 = Rectangle{w: 2, h: 2};
         match r1 != r3 {
@@ -115,5 +116,67 @@ mod tests {
         let b: Option<i32> = None;
         assert_eq!(b.map(|x| x + 6), None);
     }
+
+    #[test]
+    fn vector_usage() {
+        let v = vec![2,5,3];
+
+        assert_eq!(v.get(2), Some(&3));
+        assert_eq!(v.get(3), None);
+
+        assert_eq!(v[2], 3);
+        // println!("{}", v[3]);
+
+
+        for i in &v {
+            println!("{}", i);
+        }
+    }
+
+    #[test]
+    fn hasmap_usage() {
+        let mut m = HashMap::new();
+
+        let key = "key1";
+        let value = "value1";
+
+        let skey = String::from(key);
+        let svalue = String::from(value);
+
+        m.insert(skey, svalue.clone());
+        assert_eq!(m.get(&String::from(key)), Some(&String::from(value)));
+    }
+
+
+    struct Msg<A> {
+        v: A
+    }
+
+    impl Msg<String> {
+        fn decode(&self) -> String {
+            self.v.clone()
+        }
+    }
+
+    impl Msg<i32> {
+        fn decode(&self) -> i32 {
+            self.v * self.v
+        }
+    }
+
+    #[test]
+    fn generics_usage() {
+        let a = Some(3);
+        let b = a.map(|x| x.to_string());
+
+        assert_eq!(a, Some(3));
+        assert_eq!(b, Some(String::from("3")));
+
+        let c = Msg{v: String::from("1024")};
+        let d = Msg{v: 32};
+
+        assert_eq!(c.decode(), d.decode().to_string())
+    }
+
 }
 

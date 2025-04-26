@@ -1,3 +1,3 @@
 pub fn setup() {
-    println!("hello!");
+    println!("hello from intergration tests!");
 }
