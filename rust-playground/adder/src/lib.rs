@@ -37,6 +37,47 @@ pub fn first_word(s: &String) -> &str {
     &s[0..first_word_idx(s)]
 }
 
+pub fn largest(l: &[i32]) -> &i32 {
+    let mut largest = &l[0];
+
+    for n in l {
+        if n > largest {
+            largest = n;
+        }
+    }
+
+    largest
+}
+
+pub fn largest_char(l: &[char]) -> &char {
+    let mut largest = &l[0];
+
+    for n in l {
+        if n > largest {
+            largest = n;
+        }
+    }
+
+    largest
+}
+
+pub fn largest_gen<T:std::cmp::PartialOrd>(l: &[T]) -> &T {
+    let mut largest = &l[0];
+
+    for n in l {
+        if n > largest {
+            largest = n;
+        }
+    }
+
+    largest
+}
+
+pub struct Point<T,U> {
+    x: T,
+    y: U,
+}
+
 #[cfg(test)]
 mod tests {
     use std::collections::HashMap;
@@ -175,8 +216,54 @@ mod tests {
         let c = Msg{v: String::from("1024")};
         let d = Msg{v: 32};
 
-        assert_eq!(c.decode(), d.decode().to_string())
+        assert_eq!(c.decode(), d.decode().to_string());
     }
 
+    #[test]
+    fn find_largest_manual() {
+        let numbers = vec![32, 50, 2, 15];
+        let mut largest = &numbers[0];
+
+        for n in &numbers {
+            if n > largest {
+                largest = n;
+            }
+        }
+
+        assert_eq!(50, *largest);
+    }
+
+    #[test]
+    fn find_largest() {
+        let numbers = vec![1, 2, 3, 100, 0, -2];
+        let chars = vec!['a', 'b', 'e', '!'];
+        {
+            let largest_number = largest(&numbers);
+            assert_eq!(100, *largest_number);
+        }
+
+        {
+            let lchar = largest_char(&chars);
+            assert_eq!('e', *lchar);
+        }
+        {
+            let largest_num = largest_gen(&numbers);
+            assert_eq!(100, *largest_num);
+
+            let largest_char = largest_gen(&chars);
+            assert_eq!('e', *largest_char);
+        }
+
+    }
+
+    #[test]
+    fn generic_multiple_type_usage() {
+        let p1 = Point{x: 23, y: "str"};
+        let p2 = Point{x: 23, y: 12};
+
+        assert_eq!(p1.x, p2.x);
+        assert_eq!("str", p1.y);
+        assert_eq!(12, p2.y);
+    }
 }
 
