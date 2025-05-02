@@ -73,6 +73,26 @@ pub fn largest_gen<T:std::cmp::PartialOrd>(l: &[T]) -> &T {
     largest
 }
 
+// pub fn short_largest_gen<T: std::cmp::PartialOrd>(l: &[T]) -> &T
+/// ```
+/// assert_eq!(3, *adder::short_largest_gen(&vec![3,2,1]));
+///
+///```
+pub fn short_largest_gen<T>(l: &[T]) -> &T
+where
+    T: std::cmp::PartialOrd,
+{
+    let mut largest = &l[0];
+
+    for n in l {
+        if n > largest {
+            largest = n;
+        }
+    }
+
+    largest
+}
+
 pub struct Point<T,U> {
     x: T,
     y: U,

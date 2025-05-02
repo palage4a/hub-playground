@@ -7,7 +7,7 @@ pub struct NewsArticle {
 }
 
 impl Summary for NewsArticle {
-    fn summarize(self) -> String {
+    fn summarize(&self) -> String {
         String::from(format!("Article #{} from {} about {}", self.id, self.location, self.content))
     }
 }
