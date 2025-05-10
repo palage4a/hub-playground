@@ -4,6 +4,19 @@ use std::error::Error;
 pub fn run(config: Config) -> Result<(), Box<dyn Error>>{
     let content = fs::read_to_string(config.filepath)?;
 
+    // Imperative
+    //
+    // for line in search(&config.query, &content) {
+    //     println!("{line}");
+    // }
+
+    // Declarative
+    //
+    search(&config.query, &content).iter().for_each(|line| {
+        println!("{line}");
+    });
+
+
     Ok(())
 }
 
@@ -26,7 +39,20 @@ impl Config {
 }
 
 fn search<'a>(q: &str, c: &'a str) -> Vec<&'a str> {
-    vec![]
+    // Imperative implementation
+    //
+    // let mut results = Vec::new();
+    // for line in c.lines() {
+    //     if line.contains(q) {
+    //         results.push(line);
+    //     }
+    // }
+
+    // Declarative implementation
+    //
+    c.lines()
+        .filter(|l| { l.contains(q) })
+        .collect()
 }
 
 
