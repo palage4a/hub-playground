@@ -6,21 +6,23 @@ pub fn run(config: Config) -> Result<(), Box<dyn Error>>{
 
     // Imperative
     //
-    let results = if config.ignore_case {
-        search_case_insensetive(&config.query, &content)
-    } else {
-        search(&config.query, &content)
-    };
+    // let results = if config.ignore_case {
+    //     search_case_insensetive(&config.query, &content)
+    // } else {
+    //     search(&config.query, &content)
+    // }
 
-    for line in results{
-        println!("{line}");
-    }
+    // for line in results{
+    //     println!("{line}");
+    // }
 
     // Declarative
     //
-    // search(&config.query, &content).iter().for_each(|line| {
-    //     println!("{line}");
-    // });
+    if config.ignore_case {
+        search_case_insensetive(&config.query, &content)
+    } else {
+        search(&config.query, &content)
+    }.iter().for_each(|line| println!("{line}"));
 
     Ok(())
 }
@@ -32,21 +34,31 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn build(args: &[String]) -> Result<Self, &'static str> {
-        if args.len() < 3 {
-            return Err("not enough arguments")
-        }
+    pub fn build(mut args: impl Iterator<Item=String>) -> Result<Self, &'static str> {
+        args.next();
 
-        let ignore_case = if args.len() > 4 {
-            args[3] == "-i" && args[4] == "true"
-        } else {
-            env::var("IGNORE_CASE").is_ok()
+        let query = match args.next() {
+            Some(arg) => arg,
+            None => return Err("query arg is empty"),
+        };
+
+        let filepath = match args.next() {
+            Some(arg) => arg,
+            None => return Err("filepath arg is empty"),
+        };
+
+        let ignore_case = match args.next() {
+            Some(arg) => arg == "-i" && match args.next() {
+                Some(narg) => narg == "true",
+                None => false,
+            },
+            None => env::var("IGNORE_CASE").is_ok()
         };
 
         Ok(Self {
-            query: args[1].clone(),
-            filepath: args[2].clone(),
-            ignore_case: ignore_case,
+            query,
+            filepath,
+            ignore_case,
         })
     }
 }
@@ -71,22 +83,21 @@ fn search<'a>(q: &str, c: &'a str) -> Vec<&'a str> {
 fn search_case_insensetive<'a>(q: &str, c: &'a str) -> Vec<&'a str> {
     // Imperative implementation
     //
-    let query = q.to_lowercase();
-    let mut results = Vec::new();
-    for line in c.lines() {
-        if line.to_lowercase().contains(&query) {
-            results.push(line)
-        }
-    }
+    // let query = q.to_lowercase();
+    // let mut results = Vec::new();
+    // for line in c.lines() {
+    //     if line.to_lowercase().contains(&query) {
+    //         results.push(line)
+    //     }
+    // }
 
-    results
+    // results
 
     // Declarative implementation
     //
-    // c.lines()
-    //     .map(|line| { line.to_lowercase() })
-    //     .filter(|line| { line.contains(&q.to_lowercase()) })
-    //     .collect()
+    c.lines()
+        .filter(|line| line.to_lowercase().contains(&q.to_lowercase()))
+        .collect()
 }
 
 #[cfg(test)]
