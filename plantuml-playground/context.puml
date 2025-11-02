@@ -1,0 +1,11 @@
+@startuml
+!include  https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "name", "description")
+Container(api, "daffaf", "description")
+Container(db, "database", "mysql")
+
+Rel(user, api, "sends", "http/json")
+Rel(api, db, "queries data", "psql")
+
+@enduml
