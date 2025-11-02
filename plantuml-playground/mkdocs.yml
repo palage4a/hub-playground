@@ -12,4 +12,3 @@ plugins:
 
 nav:
   - Home: index.md
-  - C4/Context: architecture/context.md

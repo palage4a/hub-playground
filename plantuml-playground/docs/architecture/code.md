@@ -1,0 +1,39 @@
+```puml
+@startuml
+
+title Example of class diagram
+
+class User {
+    +String name
+    +String email
+    +List<Membership> memberships
+    +void register()
+    +void login()
+}
+
+class Membership {
+    +String type
+    +Date startDate
+    +Date endDate
+    +void activate()
+    +void cancel()
+}
+
+class Schedule {
+    +Date date
+    +String activity
+    +void addActivity()
+    +void removeActivity()
+}
+
+class Payment {
+    +Double amount
+    +Date date
+    +void processPayment()
+}
+
+User "1" -- "0..*" Membership : has
+Membership "1" -- "0..*" Schedule : includes
+Membership "1" -- "0..*" Payment : includes
+@enduml
+```
