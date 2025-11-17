@@ -1,0 +1,54 @@
+@startuml
+title Message System Context Diagram
+
+top to bottom direction
+
+!include  https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(person, "User", "")
+
+System_Boundary(ms, "Message System", "") {
+    Container(web, "Web application", "Web UI")
+    Container(mobile, "Mobile application", "Mobile app")
+
+    Container(wbff, "Backend for web", "aggregates data from services for web users")
+    Container(mbff, "Backend for mobile", "aggregates data from services for mobile app users")
+
+    Container(wc, "Cache for web", "Stores sessions states for web clients")
+    Container(mc, "Cache for mobile", "Stores sessions state for mobile clients")
+
+    Container(http, "HTTP/WS gateway", "http entry point")
+
+    Container(user, "User service", "Manages users")
+    Container(group, "Group service", "Manages groups")
+    Container(message, "Message service", "Core of the messaging system")
+    Container(notification, "Notification service", "Routes notifications to users")
+
+    ContainerQueue(mq, "Message queue", "")
+}
+
+System_Ext(fcm, "Third-party Notification API", "", "HTTP")
+
+Rel(person, web, "", "")
+Rel(person, mobile, "", "")
+
+Rel(web, wbff, "aggregates data", "http")
+Rel(mobile, mbff, "aggregates data", "http")
+
+Rel(wbff, http, "queries data", "http")
+Rel(mbff, http, "queries data", "http")
+
+Rel(wbff, wc, "Stores sessions data", "http")
+Rel(mbff, mc, "Stores sessions data", "http")
+
+Rel(http, user, "", "http")
+Rel(http, group, "", "http")
+Rel(http, message, "", "message")
+
+Rel(user, mq, "", "message")
+Rel(group, mq, "", "message")
+Rel(message, mq, "", "message")
+Rel(notification, mq, "", "message")
+Rel(notification, fcm, "", "message")
+
+@enduml

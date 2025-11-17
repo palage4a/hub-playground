@@ -1,0 +1,18 @@
+
+@startuml
+title Messager Context Diagram
+
+top to bottom direction
+
+!include  https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+Person(user, "User", "")
+
+System(MessageSystem, "Message System", "")
+
+System_Ext(fcm, "Third-party Notification API", "Send notifications to user", "HTTP")
+
+Rel(user, MessageSystem, "use the system")
+Rel(MessageSystem, fcm, "sends notifications")
+
+@enduml
