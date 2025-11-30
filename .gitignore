@@ -1,0 +1,9 @@
+# Clojure ignores.
+.venv
+.calva
+.lein-repl
+.clj-kondo
+.lsp
+target
+.lein-failures
+.nrepl-port
