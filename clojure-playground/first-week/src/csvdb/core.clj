@@ -1,9 +1,6 @@
 (ns csvdb.core
   (:require [clojure-csv.core :as csv]))
 
-(defn- parse-int [int-str]
-  (Integer/parseInt int-str))
-
 
 (def student-tbl (csv/parse-csv (slurp "student.csv")))
 (def subject-tbl (csv/parse-csv (slurp "subject.csv")))
@@ -31,6 +28,12 @@
 (defn data-record [tbl-keys tbl-record]
   (apply hash-map (key-value-pairs tbl-keys tbl-record)))
 
+(comment
+
+  (key-value-pairs [:id :surname :year :group_id] ["1" "Ivanov" "1996"])
+
+  (data-record [:id :surname :year :group_id] ["1" "Ivanov" "1996"])
+  )
 ;; (data-table student-tbl)
 ;; => ({:surname "Ivanov", :year "1996", :id "1"}
 ;;     {:surname "Petrov", :year "1996", :id "2"}
@@ -42,7 +45,8 @@
     (map (partial data-record keys) (next tbl))))
 
 (comment
-  (data-table student-tbl))
+  (data-table student-tbl)
+  )
 
 ;; (str-field-to-int :id {:surname "Ivanov", :year "1996", :id "1"})
 ;; => {:surname "Ivanov", :year "1996", :id 1}
@@ -81,19 +85,20 @@
 ;;
 ;; Hint: if-not, filter
 (defn where* [data condition-func]
-  (filter condition-func data))
+  (if-not (and data condition-func)
+    data
+    (filter condition-func data)))
 
 
 (comment
   (->> student
-       (filter #( > (:id %) 2)))
+       (filter #(> (:id %) 2)))
 
   (where* student (fn [rec] (> (:id rec) 1)))
 
   (where* () (fn [rec] (> (:id rec) 1)))
 
-  student
-  )
+  student)
 
 
 ;; (limit* student 1)
@@ -101,34 +106,34 @@
 ;;
 ;; Hint: if-not, take
 (defn limit* [data lim]
-  (take lim data))
+  (if-not (and data lim)
+    data
+    (take lim data)))
 
 
 (comment
 
   (take 2 student)
 
-  (limit* student 1)
-  )
+  (limit* student 1))
 ;; (order-by* student :year)
 ;; => ({:surname "Sidorov", :year 1996, :id 3} {:surname "Petrov", :year 1997, :id 2} {:surname "Ivanov", :year 1998, :id 1})
 ;; Hint: if-not, sort-by
 (defn order-by* [data column]
-  (sort-by column data))
+  (if-not (and data column)
+    data
+    (sort-by column data)))
 
 
 (comment
 
-  (order-by* student :id)
-
-  )
+  (order-by* student :id))
 
 ;; (join* (join* student-subject :student_id student :id) :subject_id subject :id)
 ;; => [{:subject "Math", :subject_id 1, :surname "Ivanov", :year 1998, :student_id 1, :id 1}
 ;;     {:subject "Math", :subject_id 1, :surname "Petrov", :year 1997, :student_id 2, :id 2}
 ;;     {:subject "CS", :subject_id 2, :surname "Petrov", :year 1997, :student_id 2, :id 2}
 ;;     {:subject "CS", :subject_id 2, :surname "Sidorov", :year 1996, :student_id 3, :id 3}]
-;;
 ;; Hint: reduce, conj, merge, first, filter, get
 ;; Here column1 belongs to data1, column2 belongs to data2.
 (defn join* [data1 column1 data2 column2]
@@ -137,43 +142,20 @@
   ;; 3. For each element of data1 (lets call it element1) find all elements of data2 (lets call each as element2) where column1 = column2.
   ;; 4. Use function 'merge' and merge element1 with each element2.
   ;; 5. Collect merged elements.
-  :ImplementMe!)
+  (reduce (fn [acc1 elem1]
+            (conj acc1 (first (let [matching-elems (filter (fn [elem2]
+                                                            (= (get elem1 column1) (get elem2 column2)))
+                                                          data2)]
+                               (map (fn [elem]
+                                      (merge elem elem1))
+                                    matching-elems)))))
+          '()
+          data1))
 
 
 (comment
 
-  (first student)
-  (first subject)
-
-
-  student
-
-  (merge (first student) (first subject))
-
-  student
-  subject
-  student-subject-tbl
-
-
-
-
-  ;;  (filter (fn [elem1]
-  ;;            (= (:subject_id elem1) (:id (first (filter (fn [elem2]
-  ;;                                                     (= (:id elem2)) subject))))) student)
-
-
-
-  (filter (fn [elem1]
-            (first (filter (fn [elem2]
-                             (= (:subject_id elem1) (:id elem2))) subject)))
-          student)
-
-
-
-  (filter (fn [elem1]
-            (= (:id (filter (fn [elem2]
-                              (= ())))))))
-
+  (join* (join* student-subject :student_id student :id) :subject_id subject :id)
   )
 
 ;; (perform-joins student-subject [[:student_id student :id] [:subject_id subject :id]])
@@ -188,6 +170,8 @@
       (let [[col1 data2 col2] (first joins)]
         (recur (join* data1 col1 data2 col2)
                (next joins))))))
+(comment
+  (perform-joins student-subject [[:student_id student :id] [:subject_id subject :id]]))
 
 (defn select [data & {:keys [where limit order-by joins]}]
   (-> data
