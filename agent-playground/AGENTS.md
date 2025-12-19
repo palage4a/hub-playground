@@ -26,3 +26,28 @@
 - Never hardcode secrets in source code
 - API keys loaded from environment variables
 - .env files excluded from version control via .gitignore
+
+## Best Practices
+- All agents must inherit from BaseAgent and implement process() method
+- Handle API rate limits gracefully with exponential backoff
+- Validate all inputs before processing
+- Log important events at appropriate levels (DEBUG, INFO, WARNING, ERROR)
+- Keep methods small and focused on single responsibilities
+- Return structured data that can be easily serialized
+- Include comprehensive error handling with meaningful error messages
+
+## Running Tests
+To run a specific test function:
+```bash
+python -m pytest test.py::test_function_name -v
+```
+
+To run all tests:
+```bash
+python -m pytest test.py
+```
+
+To run tests with coverage:
+```bash
+python -m pytest test.py --cov=src
+```
