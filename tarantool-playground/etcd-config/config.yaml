@@ -1,0 +1,9 @@
+config:
+  etcd:
+    endpoints:
+    - http://localhost:2379
+    prefix: /etcd-config/app
+    http:
+      request:
+        timeout: 3
+

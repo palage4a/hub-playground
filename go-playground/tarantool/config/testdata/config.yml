@@ -1,0 +1,94 @@
+memtx:
+  # 3 GB in bytes
+  memory: 3221225472
+
+credentials:
+  users:
+    user:
+      roles: [super]
+      password: pass
+    storage:
+      roles: [sharding]
+      password: storage
+
+iproto:
+  readahead: 10485760
+  net_msg_max: 128
+  threads: 4
+  advertise:
+    sharding:
+      login: storage
+      password: storage
+
+sharding:
+  bucket_count: 1000
+  rebalancer_mode: off
+
+roles_cfg:
+  app.roles.grpc:
+    app_name: MESSAGE_QUEUE_EE_API
+    app_version: test
+    core_host: 0.0.0.0
+    core_port: 18184
+    grpc_listen:
+      - uri: 'tcp://0.0.0.0:18182'
+
+    grpc_options:
+      reflection_enabled: true
+
+    tracing:
+      enabled: true
+
+    publisher:
+      enabled: true
+      local_routing: true
+      tarantool:
+        user: user
+        pass: pass
+        connections:
+          routers:
+            - "localhost:3301"
+    consumer:
+      enabled: true
+      polling_timeout: 500ms
+      cache:
+        enabled: false
+        debug_mode: false
+        max_buffers: 50
+        buffer_size: 10000
+        fetch_batch_size: 100
+        check_delay: 1ms
+      tarantool:
+        user: user
+        pass: pass
+        connections:
+          storage-1:
+            - "localhost:3301"
+
+  app.roles.queue:
+    queues:
+      - name: queue
+        poll_max_batch: 64
+
+groups:
+  app:
+    replicasets:
+      app:
+        sharding:
+          roles: [router, storage]
+        roles:
+          - roles.metrics-export
+          - app.roles.api
+          - app.roles.queue
+        instances:
+          app:
+            roles_cfg:
+              roles.metrics-export:
+                http:
+                  - listen: 8081
+                    endpoints:
+                    - format: prometheus
+                      path: '/metrics'
+            iproto:
+              listen:
+                - uri: 127.0.0.1:3301
