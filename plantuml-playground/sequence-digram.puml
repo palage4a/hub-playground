@@ -1,0 +1,27 @@
+@startuml test_name
+    autonumber
+
+    actor Client
+
+    participant UI
+    participant Back
+
+    activate Client
+      Client -> UI: Запрос 1
+
+    activate UI
+      UI -> Back: Запрос от клиента
+
+    activate Back
+
+      note right of UI: важное пояснение
+
+      Back -> Back: Думает
+      UI <-- Back: Ответ от Back
+
+    deactivate Back
+      Client <-- UI: Ответ от UI
+
+    deactivate UI
+    deactivate Client
+@enduml
