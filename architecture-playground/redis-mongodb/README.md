@@ -1,9 +1,19 @@
-# Redis + MongoDB Cluster
+# Redis + MongoDB Sharded Cluster
 
 This Docker Compose configuration sets up a complete data infrastructure with:
-- **MongoDB Replication**: 3-node replica set for high availability
-- **MongoDB Sharding**: Config server, 2 shards, and mongos router for horizontal scaling
+- **MongoDB Sharded Cluster**: Config server, 2 shards (each with 3 replicas), and mongos router
 - **Redis Cluster**: 6-node Redis cluster with replication
+
+## Architecture
+
+### MongoDB Sharded Cluster
+- **Config Server**: Single node replica set for cluster metadata
+- **Shard 1**: 3-node replica set (shard1a: primary, shard1b: secondary, shard1c: secondary)
+- **Shard 2**: 3-node replica set (shard2a: primary, shard2b: secondary, shard2c: secondary)
+- **Mongos Router**: Query router for the sharded cluster
+
+### Redis Cluster
+- 6-node cluster with 3 masters and 3 replicas
 
 ## Quick Start
 
@@ -13,42 +23,7 @@ Start all services:
 docker compose up -d
 ```
 
-## MongoDB Replication
-
-The replication setup consists of 3 MongoDB instances (ports 27017-27019).
-
-### 1. Initialize Replication
-
-Connect to the primary instance:
-
-```bash
-docker compose exec mongodb1 mongosh
-```
-
-Initialize the replica set:
-
-```javascript
-rs.initiate({
-  _id: "rs0",
-  members: [
-    { _id: 0, host: "mongodb1:27017" },
-    { _id: 1, host: "mongodb2:27018" },
-    { _id: 2, host: "mongodb3:27019" }
-  ]
-})
-```
-
-Expected output: `"ok": 1`
-
-### 2. Verify Replication Status
-
-```javascript
-rs.status()
-```
-
-## MongoDB Sharding
-
-The sharding setup includes a config server, 2 shards, and a mongos router (ports 27027-27030).
+## MongoDB Sharded Cluster Setup
 
 ### 1. Initialize Config Server
 
@@ -58,7 +33,7 @@ Connect to the config server:
 docker compose exec configSrv mongosh --port 27027
 ```
 
-Initialize:
+Initialize the config server replica set:
 
 ```javascript
 rs.initiate({
@@ -70,52 +45,82 @@ rs.initiate({
 });
 ```
 
-### 2. Initialize Shards
+### 2. Initialize Shard 1 Replica Set
 
-#### Shard 1
+Connect to the first shard node:
 
 ```bash
-docker compose exec shard1 mongosh --port 27028
+docker compose exec shard1a mongosh --port 27028
 ```
+
+Initialize the replica set with 3 members:
 
 ```javascript
 rs.initiate({
-  _id: "shard1",
+  _id: "shard1rs",
   members: [
-    { _id: 0, host: "shard1:27028" }
+    { _id: 0, host: "shard1a:27028" },
+    { _id: 1, host: "shard1b:27029" },
+    { _id: 2, host: "shard1c:27030" }
   ]
 });
 ```
 
-#### Shard 2
+Check replica set status:
+
+```javascript
+rs.status()
+```
+
+### 3. Initialize Shard 2 Replica Set
+
+Connect to the first shard node:
 
 ```bash
-docker compose exec shard2 mongosh --port 27029
+docker compose exec shard2a mongosh --port 27031
 ```
+
+Initialize the replica set with 3 members:
 
 ```javascript
 rs.initiate({
-  _id: "shard2",
+  _id: "shard2rs",
   members: [
-    { _id: 0, host: "shard2:27029" }
+    { _id: 0, host: "shard2a:27031" },
+    { _id: 1, host: "shard2b:27032" },
+    { _id: 2, host: "shard2c:27033" }
   ]
 });
 ```
 
-### 3. Configure Router
+Check replica set status:
+
+```javascript
+rs.status()
+```
+
+### 4. Configure Mongos Router
 
 Connect to the mongos router:
 
 ```bash
-docker compose exec mongos_router mongosh --port 27030
+docker compose exec mongos_router mongosh --port 27034
 ```
 
-Add shards to the cluster:
+Add both shards to the cluster:
 
 ```javascript
-sh.addShard("shard1/shard1:27028");
-sh.addShard("shard2/shard2:27029");
+sh.addShard("shard1rs/shard1a:27028,shard1b:27029,shard1c:27030");
+sh.addShard("shard2rs/shard2a:27031,shard2b:27032,shard2c:27033");
 ```
+
+Verify shard status:
+
+```javascript
+sh.status()
+```
+
+### 5. Enable Sharding
 
 Enable sharding for a database and collection:
 
@@ -124,9 +129,9 @@ sh.enableSharding("somedb");
 sh.shardCollection("somedb.helloDoc", { "name": "hashed" });
 ```
 
-### 4. Test Sharding
+### 6. Test Sharding
 
-Insert test data:
+Insert test data to verify distribution across shards:
 
 ```javascript
 use somedb;
@@ -140,13 +145,13 @@ db.helloDoc.countDocuments();
 
 Expected result: `1000`
 
-### 5. Verify Data Distribution
+### 7. Verify Data Distribution
 
-Check documents on each shard:
+Check documents on each shard primary:
 
-**Shard 1:**
+**Shard 1 (connect to primary):**
 ```bash
-docker compose exec shard1 mongosh --port 27028
+docker compose exec shard1a mongosh --port 27028
 ```
 
 ```javascript
@@ -154,15 +159,17 @@ use somedb;
 db.helloDoc.countDocuments();
 ```
 
-**Shard 2:**
+**Shard 2 (connect to primary):**
 ```bash
-docker compose exec shard2 mongosh --port 27029
+docker compose exec shard2a mongosh --port 27031
 ```
 
 ```javascript
 use somedb;
 db.helloDoc.countDocuments();
 ```
+
+The total count across both shards should equal 1000.
 
 ## Redis Cluster
 
@@ -197,14 +204,43 @@ redis-cli cluster nodes
 
 | Service | Port | Description |
 |---------|------|-------------|
-| mongodb1 | 27017 | Replica set primary |
-| mongodb2 | 27018 | Replica set secondary |
-| mongodb3 | 27019 | Replica set secondary |
-| configSrv | 27027 | Config server for sharding |
-| shard1 | 27028 | Shard 1 |
-| shard2 | 27029 | Shard 2 |
-| mongos_router | 27030 | MongoDB query router |
+| configSrv | 27027 | Config server |
+| shard1a | 27028 | Shard 1 primary |
+| shard1b | 27029 | Shard 1 secondary |
+| shard1c | 27030 | Shard 1 secondary |
+| shard2a | 27031 | Shard 2 primary |
+| shard2b | 27032 | Shard 2 secondary |
+| shard2c | 27033 | Shard 2 secondary |
+| mongos_router | 27034 | Query router |
 | redis_1-6 | 6379 | Redis cluster nodes |
+
+## Replica Sets Summary
+
+| Replica Set | Members | Ports |
+|-------------|---------|-------|
+| config_server | configSrv | 27027 |
+| shard1rs | shard1a, shard1b, shard1c | 27028-27030 |
+| shard2rs | shard2a, shard2b, shard2c | 27031-27033 |
+
+## Troubleshooting
+
+### Check Replica Set Status
+
+```javascript
+rs.status()
+```
+
+### Check Sharding Status
+
+```javascript
+sh.status()
+```
+
+### View Cluster Configuration
+
+```javascript
+db.getSiblingDB("config").shards.find()
+```
 
 ## Cleanup
 
