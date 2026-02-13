@@ -1,0 +1,18 @@
+return {
+    host = "0.0.0.0",
+    port = 8080,
+    memtx_dir = "var/lib/tarantool/memtx",
+    vinyl_dir = "var/lib/tarantool/vinyl",
+    default_partitions = 4,
+    default_replication_factor = 1,
+    default_retention_seconds = 604800,
+    default_retention_bytes = 1073741824,
+    acks = "leader",
+    retries = 3,
+    retry_backoff_ms = 100,
+    max_poll_records = 500,
+    session_timeout_ms = 30000,
+    request_timeout_ms = 30000,
+    min_insync_replicas = 1,
+    log_dir = "var/log",
+}
